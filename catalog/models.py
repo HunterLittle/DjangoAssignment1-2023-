@@ -1,3 +1,5 @@
+from django.contrib.auth.models import User
+from datetime import date
 from django.db import models
 from django.urls import reverse
 import uuid
@@ -16,6 +18,7 @@ class Author(models.Model):
     last_name = models.CharField(max_length=100)
     date_of_birth = models.DateField(null=True, blank=True)
     date_of_death = models.DateField('Died', null=True, blank=True)
+    author_image = models.ImageField(upload_to='images/', null=True, blank=True)
 
     class Meta:
         ordering = ['last_name', 'first_name']
@@ -42,6 +45,7 @@ class Book(models.Model):
 
     # ManyToManyField used because genre can contain many books. Books can cover many genres.
     genre = models.ManyToManyField(Genre, help_text='Select a genre for this book')
+    book_image = models.ImageField(upload_to='images/', null=True, blank=True)
 
     def __str__(self):
         """String for representing the Model object."""
@@ -71,6 +75,12 @@ class BookInstance(models.Model):
         default='m',
         help_text='Book availability',
     )
+    borrower = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, blank=True)
+
+    @property
+    def is_overdue(self):
+        """Determines if the book is overdue based on due date and current date."""
+        return bool(self.due_back and date.today() > self.due_back)
 
     class Meta:
         ordering = ['due_back']
